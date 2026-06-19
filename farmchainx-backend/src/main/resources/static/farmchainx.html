@@ -1403,14 +1403,31 @@ function toggleLang(l,el){
   else{selectedLangs.push(l);el.classList.add('on');}
 }
 async function fregStep1(){
+
+  // get selected languages correctly
+  const langs = [];
+  document.querySelectorAll('#lang-grid input[type="checkbox"]:checked')
+    .forEach(cb => langs.push(cb.value));
+
+  // always include English
+  if(!langs.includes("English")){
+    langs.unshift("English");
+  }
+
+  // save language
+  localStorage.setItem("selectedLanguage", JSON.stringify(langs));
+
   const name=document.getElementById('fr-name').value.trim();
   const email=document.getElementById('fr-email').value.trim();
+
   if(!name){toast('Enter your full name','⚠️');return;}
   if(!email||!email.includes('@')){toast('Enter valid email','⚠️');return;}
   
   const btn=document.querySelector('#freg-s1 .btn-primary');
   if(btn){btn.textContent='Sending OTP...';btn.disabled=true;}
+
   const result=await sendRealOTP(email,name);
+
   if(btn){btn.textContent='Continue — Send OTP →';btn.disabled=false;}
   
   document.getElementById('freg-s1').style.display='none';
@@ -1427,6 +1444,7 @@ async function fregStep1(){
   } else {
     document.getElementById('otp-sent-msg').textContent=`OTP sent to ${email}. Valid for 5 minutes.`;
   }
+
   openM('m-otp-sent');
   toast('OTP sent to '+email,'📧');
 }
@@ -1493,13 +1511,26 @@ function fregCreate(){
 // FARMER DASHBOARD INIT
 // ══════════════════════════════════════
 function initFarmerDash(){
-  if(!farmerData)return;
-  document.getElementById('f-av').textContent=farmerData.name[0].toUpperCase();
-  document.getElementById('f-uname').textContent=farmerData.name;
-  document.getElementById('f-hero-name').textContent='Welcome, '+farmerData.name;
-  document.getElementById('f-hero-loc').textContent=`📍 ${farmerData.village}, ${farmerData.district}, ${farmerData.state}`;
-  document.getElementById('f-hero-acres').textContent=`🌱 ${farmerData.acres} acres`;
-  document.getElementById('f-profile-photo-header').textContent=farmerData.name[0].toUpperCase();
+  if(!farmerData) return;
+
+  const langs = JSON.parse(localStorage.getItem("selectedLanguage")) || [];
+
+  document.getElementById('f-hero-name').textContent =
+    'Welcome, ' + farmerData.name +
+    (langs.length ? ' (' + langs.join(', ') + ')' : '');
+
+  document.getElementById('f-av').textContent = farmerData.name[0].toUpperCase();
+  document.getElementById('f-uname').textContent = farmerData.name;
+
+  document.getElementById('f-hero-loc').textContent =
+    `📍 ${farmerData.village}, ${farmerData.district}, ${farmerData.state}`;
+
+  document.getElementById('f-hero-acres').textContent =
+    `🌱 ${farmerData.acres} acres`;
+
+  document.getElementById('f-profile-photo-header').textContent =
+    farmerData.name[0].toUpperCase();
+
   renderDashOrders();
   renderDashSensors('f-dash-sensors');
   renderCropsMini();
